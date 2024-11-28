@@ -2,13 +2,30 @@
 
 import React, { useState, useCallback, useRef, useEffect } from 'react'
 
+const MIN_WIDTH = 10; // Minimum panel width percentage
+const MAX_WIDTH = 80; // Maximum panel width percentage
+
 interface SplitViewProps {
-  children: React.ReactNode[]
+  children: [React.ReactNode, React.ReactNode, React.ReactNode]
   leftWidth: number
   middleWidth: number
   rightWidth: number
-  onResize: (left: number, middle: number, right: number) => void
+  onResize: (leftWidth: number, middleWidth: number, rightWidth: number) => void
 }
+
+const ResizablePanel: React.FC<{
+  width: number
+  onMouseDown: () => void
+  children: React.ReactNode
+}> = ({ width, onMouseDown, children }) => (
+  <div style={{ width: `${width}%` }} className="relative">
+    {children}
+    <div
+      className="absolute right-0 top-0 h-full w-1 cursor-col-resize bg-gray-300"
+      onMouseDown={onMouseDown}
+    />
+  </div>
+)
 
 const SplitView: React.FC<SplitViewProps> = ({
   children,
@@ -45,14 +62,22 @@ const SplitView: React.FC<SplitViewProps> = ({
 
       if (activeDivider === 0) {
         newLeftWidth = (mouseX / containerWidth) * 100
-        newMiddleWidth = middleWidth + (leftWidth - newLeftWidth)
+        newMiddleWidth = leftWidth + middleWidth - newLeftWidth
       } else if (activeDivider === 1) {
         newMiddleWidth = ((mouseX - (leftWidth / 100) * containerWidth) / containerWidth) * 100
-        newRightWidth = 100 - newLeftWidth - newMiddleWidth
+        newRightWidth = 100 - leftWidth - newMiddleWidth
       }
 
-      // Ensure minimum width of 10% for each section
-      if (newLeftWidth < 10 || newMiddleWidth < 10 || newRightWidth < 10) return
+      // Clamp widths between MIN_WIDTH% and MAX_WIDTH%
+      newLeftWidth = Math.max(MIN_WIDTH, Math.min(newLeftWidth, MAX_WIDTH))
+      newMiddleWidth = Math.max(MIN_WIDTH, Math.min(newMiddleWidth, MAX_WIDTH))
+      newRightWidth = Math.max(MIN_WIDTH, Math.min(newRightWidth, MAX_WIDTH))
+
+      // Ensure total width equals 100%
+      const totalWidth = newLeftWidth + newMiddleWidth + newRightWidth
+      newLeftWidth = (newLeftWidth / totalWidth) * 100
+      newMiddleWidth = (newMiddleWidth / totalWidth) * 100
+      newRightWidth = (newRightWidth / totalWidth) * 100
 
       onResize(newLeftWidth, newMiddleWidth, newRightWidth)
     },
@@ -71,20 +96,12 @@ const SplitView: React.FC<SplitViewProps> = ({
 
   return (
     <div ref={containerRef} className="flex h-full">
-      <div style={{ width: `${leftWidth}%` }} className="relative">
+      <ResizablePanel width={leftWidth} onMouseDown={() => handleMouseDown(0)}>
         {children[0]}
-        <div
-          className="absolute right-0 top-0 h-full w-1 cursor-col-resize bg-gray-300"
-          onMouseDown={() => handleMouseDown(0)}
-        />
-      </div>
-      <div style={{ width: `${middleWidth}%` }} className="relative">
+      </ResizablePanel>
+      <ResizablePanel width={middleWidth} onMouseDown={() => handleMouseDown(1)}>
         {children[1]}
-        <div
-          className="absolute right-0 top-0 h-full w-1 cursor-col-resize bg-gray-300"
-          onMouseDown={() => handleMouseDown(1)}
-        />
-      </div>
+      </ResizablePanel>
       <div style={{ width: `${rightWidth}%` }}>{children[2]}</div>
     </div>
   )

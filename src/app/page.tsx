@@ -12,7 +12,7 @@ export default function Home() {
   const [rightWidth, setRightWidth] = useState(33)
 
   return (
-    <main className="h-screen bg-background text-foreground">
+    <main className="min-h-[600px] min-w-[900px] h-screen w-screen overflow-auto bg-background text-foreground">
       <SplitView
         leftWidth={leftWidth}
         middleWidth={middleWidth}

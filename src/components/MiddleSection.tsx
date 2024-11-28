@@ -5,14 +5,15 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 
 const MiddleSection = () => {
-  const [time, setTime] = useState(25 * 60) // 25 minutes in seconds
+  const TOTAL_TIME = 25 * 60
+  const [time, setTime] = useState(TOTAL_TIME)
   const [isActive, setIsActive] = useState(false)
 
   useEffect(() => {
-    let interval: NodeJS.Timeout | null = null
+    let intervalId: number | null = null
 
     if (isActive && time > 0) {
-      interval = setInterval(() => {
+      intervalId = window.setInterval(() => {
         setTime((prevTime) => prevTime - 1)
       }, 1000)
     } else if (time === 0) {
@@ -20,7 +21,9 @@ const MiddleSection = () => {
     }
 
     return () => {
-      if (interval) clearInterval(interval)
+      if (intervalId !== null) {
+        window.clearInterval(intervalId)
+      }
     }
   }, [isActive, time])
 
@@ -30,14 +33,14 @@ const MiddleSection = () => {
 
   const resetTimer = () => {
     setIsActive(false)
-    setTime(25 * 60)
+    setTime(TOTAL_TIME)
   }
 
   const minutes = Math.floor(time / 60)
   const seconds = time % 60
 
   const circumference = 2 * Math.PI * 120 // 120 is the radius of the circle
-  const dashOffset = circumference * (1 - time / (25 * 60))
+  const dashOffset = circumference * (1 - time / TOTAL_TIME)
 
   return (
     <div className="flex h-full flex-col items-center justify-center p-4">
