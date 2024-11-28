@@ -170,52 +170,59 @@ const RightSection = () => {
 
           <DragDropContext onDragEnd={handleDragEnd}>
             <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-              <Droppable droppableId="todo">
-                {(provided, snapshot)=>(<div
-                    ref={provided.innerRef}
-                    {...provided.droppableProps}
-                    className={cn(
-                      "rounded-lg border bg-background/50 p-4 transition-colors",
-                      snapshot.isDraggingOver && "bg-accent/10 border-accent"
-                    )}
-                  >
-                    <div className="mb-2 flex items-center justify-between">
-                      <h3 className="font-semibold">To Do</h3>
-                      <Badge variant="secondary">{todoTasks.length}</Badge>
+              {/* To Do List */}
+              <div className="rounded-lg border bg-background/50 p-4 transition-colors">
+                <div className="mb-2 flex items-center justify-between">
+                  <h3 className="font-semibold">To Do</h3>
+                  <Badge variant="secondary">{todoTasks.length}</Badge>
+                </div>
+                <Droppable droppableId="todo">
+                  {(provided, snapshot) => (
+                    <div
+                      ref={provided.innerRef}
+                      {...provided.droppableProps}
+                      className={cn(
+                        "transition-colors",
+                        snapshot.isDraggingOver && "bg-accent/10 border-accent"
+                      )}
+                    >
+                      <ScrollArea className="h-[calc(100vh-500px)]">
+                        <AnimatePresence mode="popLayout">
+                          {todoTasks.map((task, index) => renderDraggableTask(task, index))}
+                        </AnimatePresence>
+                        {provided.placeholder}
+                      </ScrollArea>
                     </div>
-                    <ScrollArea className="h-[calc(100vh-500px)]">
-                      <AnimatePresence mode="popLayout">
-                        {todoTasks.map((task, index) => renderDraggableTask(task, index))}
-                      </AnimatePresence>
-                      {provided.placeholder}
-                    </ScrollArea>
-                  </div>
-                )}
-              </Droppable>
+                  )}
+                </Droppable>
+              </div>
 
-              <Droppable droppableId="done">
-                {(provided, snapshot) => (
-                  <div
-                    ref={provided.innerRef}
-                    {...provided.droppableProps}
-                    className={cn(
-                      "rounded-lg border bg-background/50 p-4 transition-colors",
-                      snapshot.isDraggingOver && "bg-accent/10 border-accent"
-                    )}
-                  >
-                    <div className="mb-2 flex items-center justify-between">
-                      <h3 className="font-semibold">Completed</h3>
-                      <Badge variant="secondary">{doneTasks.length}</Badge>
+              {/* Completed List */}
+              <div className="rounded-lg border bg-background/50 p-4 transition-colors">
+                <div className="mb-2 flex items-center justify-between">
+                  <h3 className="font-semibold">Completed</h3>
+                  <Badge variant="secondary">{doneTasks.length}</Badge>
+                </div>
+                <Droppable droppableId="done">
+                  {(provided, snapshot) => (
+                    <div
+                      ref={provided.innerRef}
+                      {...provided.droppableProps}
+                      className={cn(
+                        "transition-colors",
+                        snapshot.isDraggingOver && "bg-accent/10 border-accent"
+                      )}
+                    >
+                      <ScrollArea className="h-[calc(100vh-500px)]">
+                        <AnimatePresence mode="popLayout">
+                          {doneTasks.map((task, index) => renderDraggableTask(task, index))}
+                        </AnimatePresence>
+                        {provided.placeholder}
+                      </ScrollArea>
                     </div>
-                    <ScrollArea className="h-[calc(100vh-500px)]">
-                      <AnimatePresence mode="popLayout">
-                        {doneTasks.map((task, index) => renderDraggableTask(task, index))}
-                      </AnimatePresence>
-                      {provided.placeholder}
-                    </ScrollArea>
-                  </div>
-                )}
-              </Droppable>
+                  )}
+                </Droppable>
+              </div>
             </div>
           </DragDropContext>
 
@@ -244,13 +251,13 @@ const RightSection = () => {
                     <CardContent className="p-0">
                       <Carousel className="w-full">
                         <CarouselContent>
-                          <CarouselItem>
-                            <TaskProgressChart data={chartData} />
-                          </CarouselItem>
-                          <CarouselItem>
-                            <TaskDistributionChart data={chartData} />
-                          </CarouselItem>
-                        </CarouselContent>
+                            <CarouselItem>
+                              <TaskProgressChart data={chartData} />
+                            </CarouselItem>
+                            <CarouselItem>
+                              <TaskDistributionChart data={chartData} />
+                            </CarouselItem>
+                          </CarouselContent>
                         <CarouselPrevious />
                         <CarouselNext />
                       </Carousel>

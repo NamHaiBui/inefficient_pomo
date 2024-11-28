@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo, useCallback } from 'react'
 import { Settings, ChevronUp, ChevronDown } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -12,7 +12,9 @@ import { ScrollArea } from '@/components/ui/scroll-area'
 import { Badge } from '@/components/ui/badge'
 import { Trie } from '@/utils/trie'
 import type { TryHardLevel, VideoContent, UserSettings } from '@/types/settings'
+import VideoPlayer from './smaller_components/VideoPlayer'
 
+// Move constants outside the component
 const predefinedInterests = [
   'Programming', 'Reading', 'Gaming', 'Cooking', 'Fitness',
   'Music', 'Art', 'Photography', 'Writing', 'Meditation',
@@ -35,11 +37,13 @@ const LeftSection = () => {
   const [searchTerm, setSearchTerm] = useState('')
   const [searchResults, setSearchResults] = useState<string[]>([])
   const [customInterest, setCustomInterest] = useState('')
-  const [trie] = useState(() => {
+
+  // Use useMemo for trie initialization
+  const trie = useMemo(() => {
     const t = new Trie()
     predefinedInterests.forEach(interest => t.insert(interest))
     return t
-  })
+  }, [])
 
   useEffect(() => {
     if (searchTerm) {
@@ -48,9 +52,10 @@ const LeftSection = () => {
     } else {
       setSearchResults([])
     }
-  }, [searchTerm, trie ])
+  }, [searchTerm, trie])
 
-  const addCustomInterest = () => {
+  // Memoize functions with useCallback
+  const addCustomInterest = useCallback(() => {
     if (customInterest && !settings.interests.includes(customInterest)) {
       setSettings(prev => ({
         ...prev,
@@ -59,25 +64,25 @@ const LeftSection = () => {
       trie.insert(customInterest)
       setCustomInterest('')
     }
-  }
+  }, [customInterest, settings.interests, trie])
 
-  const toggleInterest = (interest: string) => {
+  const toggleInterest = useCallback((interest: string) => {
     setSettings(prev => ({
       ...prev,
       interests: prev.interests.includes(interest)
         ? prev.interests.filter(i => i !== interest)
         : [...prev.interests, interest]
     }))
-  }
+  }, [settings.interests])
 
-  const removeInterest = (interest: string) => {
+  const removeInterest = useCallback((interest: string) => {
     setSettings(prev => ({
       ...prev,
       interests: prev.interests.filter(i => i !== interest)
     }))
-  }
+  }, [settings.interests])
 
-  const adjustTryHardLevel = (direction: 'up' | 'down') => {
+  const adjustTryHardLevel = useCallback((direction: 'up' | 'down') => {
     const levels: TryHardLevel[] = ['low', 'medium', 'high']
     const currentIndex = levels.indexOf(settings.tryHardLevel)
     const newIndex = direction === 'up' 
@@ -88,7 +93,7 @@ const LeftSection = () => {
       ...prev,
       tryHardLevel: levels[newIndex]
     }))
-  }
+  }, [settings.tryHardLevel])
 
   return (
     <div className="flex h-full flex-col p-4">
@@ -130,23 +135,9 @@ const LeftSection = () => {
           </CardContent>
         </Card>
       ) : (
-        <div className="aspect-video bg-gray-200 flex-grow">
-          <iframe
-            width="100%"
-            height="100%"
-            src={
-              settings.videoContent === 'linkedin'
-                ? 'https://www.youtube.com/embed/dQw4w9WgXcQ'
-                : settings.videoContent === 'questionable'
-                ? 'https://www.youtube.com/embed/dQw4w9WgXcQ'
-                : 'https://www.youtube.com/embed/dQw4w9WgXcQ'
-            }
-            title="Video Content"
-            frameBorder="0"
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-            allowFullScreen
-          ></iframe>
-        </div>
+<div className="aspect-video bg-gray-200 flex-grow relative">
+  <VideoPlayer videoContent={settings.videoContent} />
+</div>
       )}
 
       {/* Bottom Section - Video Source */}
@@ -232,7 +223,7 @@ const LeftSection = () => {
                     placeholder="Add custom interest..."
                     value={customInterest}
                     onChange={(e) => setCustomInterest(e.target.value)}
-                    onKeyPress={(e) => e.key === 'Enter' && addCustomInterest()}
+                    onKeyDown={(e) => e.key === 'Enter' && addCustomInterest()}
                   />
                   <Button onClick={addCustomInterest}>Add</Button>
                 </div>
