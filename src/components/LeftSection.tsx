@@ -162,7 +162,7 @@ const LeftSection = () => {
       </div>
 
       <Dialog open={showSettings} onOpenChange={setShowSettings}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-2xl"  aria-description="Manage your preferences and interests">
           <DialogHeader>
             <DialogTitle>Settings</DialogTitle>
           </DialogHeader>

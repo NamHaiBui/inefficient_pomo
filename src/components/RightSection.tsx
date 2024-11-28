@@ -18,10 +18,9 @@ import TaskDistributionChart from '@/components/TaskDistributionChart'
 import generateTaskId from '@/utils/id_generator'
 
 const COLORS = [
-  'hsl(var(--primary))',
-  'hsl(var(--destructive))',
-  'hsl(var(--warning))',
-  'hsl(var(--success))',
+  '#ff6b6b',       // destructive - soft red
+  '#ffd93d',       // warning - bright yellow
+  '#4ade80',       // success - vibrant green
 ]
 
 const MotionCard = motion.create(Card)
@@ -105,10 +104,10 @@ const RightSection = () => {
   const doneTasks = tasks.filter(task => task.completed)
 
   const chartData = [
-    { name: 'To Do', value: todoTasks.length, color: COLORS[1] },
+    { name: 'To Do', value: todoTasks.length, color: COLORS[0] },
     { name: 'Completed', value: doneTasks.filter(t => 
       new Date(t.createdAt).toDateString() === new Date().toDateString()
-    ).length, color: COLORS[3] },
+    ).length, color: COLORS[2] },
   ]
 
   const renderDraggableTask = useCallback((task: TaskNode, index: number) => (
