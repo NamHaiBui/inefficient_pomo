@@ -38,7 +38,6 @@ const videoCategories: Record<string, string[]> = {
   ],
   'short': [
     'https://www.youtube.com/embed/SHORT_VIDEO_ID',
-    // other URLs
   ],
 } as const;
 
