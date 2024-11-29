@@ -1,48 +1,42 @@
-import React from 'react'
-import { Draggable } from '@hello-pangea/dnd'
-import { motion } from 'framer-motion'
-import { Checkbox } from '@/components/ui/checkbox'
-import { Button } from '@/components/ui/button'
-import { Trash2, GripVertical } from 'lucide-react'
-import { cn } from "@/lib/utils"
-import { TaskNode } from '@/utils/TaskListDLL'
+import React from 'react';
+import { Draggable } from '@hello-pangea/dnd';
+import { motion } from 'framer-motion';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Button } from '@/components/ui/button';
+import { Trash2, GripVertical } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { TaskNode } from '@/utils/TaskListDLL';
 
 interface TaskItemProps {
   task: TaskNode
-  index: number
-  toggleTask: (id: string) => void
-  deleteTask: (id: string) => void
+  index: number;
+  toggleTask: (id: string) => void;
+  deleteTask: (id: string) => void;
 }
 
-const TaskItem: React.FC<TaskItemProps> = ({ task, index, toggleTask, deleteTask }) => (
-  <Draggable 
-    key={`task-${task.id}`} 
-    draggableId={task.id} 
-    index={index}
-  >
+const TaskItem: React.FC<TaskItemProps> = ({
+  task,
+  index,
+  toggleTask,
+  deleteTask,
+}) => (
+  <Draggable draggableId={task.id} index={index}>
     {(provided, snapshot) => (
       <motion.div
-        initial={false}
-        animate={{
-          scale: snapshot.isDragging ? 1.02 : 1,
-          boxShadow: snapshot.isDragging ? "0 5px 20px rgba(0,0,0,0.1)" : "none",
-          zIndex: snapshot.isDragging ? 50 : 1
-        }}
         ref={provided.innerRef}
-        {...provided.draggableProps}
-        style={{
-          ...provided.draggableProps.style,
-          position: snapshot.isDragging ? 'relative' : 'static'
-        }}
+        {...provided.draggableProps} // Spread draggableProps here
+        style={provided.draggableProps.style} // Apply provided styles
         className={cn(
-          "mb-2 flex items-center rounded-md border bg-card p-3 transition-colors relative group",
-          snapshot.isDragging && "bg-accent/50 border-accent shadow-xl",
-          task.completed && "bg-muted/50"
+          'relative mb-2 flex items-center rounded-md border bg-card p-3 transition-colors group',
+          snapshot.isDragging &&
+            'bg-accent/50 border-accent shadow-xl',
+          task.completed && 'bg-muted/50'
         )}
       >
         <div
-          {...provided.dragHandleProps}
-          className="absolute left-2 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity"
+          {...provided.dragHandleProps} // Apply dragHandleProps to the handle
+          className="absolute left-2 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity cursor-grab"
+          style={{ touchAction: 'none' }}
         >
           <GripVertical className="h-4 w-4 text-muted-foreground" />
         </div>
@@ -51,14 +45,14 @@ const TaskItem: React.FC<TaskItemProps> = ({ task, index, toggleTask, deleteTask
             id={`task-${task.id}`}
             checked={task.completed}
             onCheckedChange={() => toggleTask(task.id)}
-            onClick={(e) => e.stopPropagation()}
+            className="pointer-events-auto"
           />
           <div className="flex flex-col min-w-0">
             <label
               htmlFor={`task-${task.id}`}
               className={cn(
-                "text-sm font-medium leading-none truncate peer-disabled:cursor-not-allowed peer-disabled:opacity-70",
-                task.completed && "line-through text-muted-foreground"
+                'text-sm font-medium leading-none truncate select-none',
+                task.completed && 'line-through text-muted-foreground'
               )}
             >
               {task.text}
@@ -72,8 +66,8 @@ const TaskItem: React.FC<TaskItemProps> = ({ task, index, toggleTask, deleteTask
           variant="ghost"
           size="icon"
           onClick={(e) => {
-            e.stopPropagation()
-            deleteTask(task.id)
+            e.stopPropagation();
+            deleteTask(task.id);
           }}
           className="h-8 w-8 text-muted-foreground hover:text-destructive opacity-0 group-hover:opacity-100 transition-opacity"
         >
@@ -82,6 +76,6 @@ const TaskItem: React.FC<TaskItemProps> = ({ task, index, toggleTask, deleteTask
       </motion.div>
     )}
   </Draggable>
-)
+);
 
-export default TaskItem
+export default React.memo(TaskItem);

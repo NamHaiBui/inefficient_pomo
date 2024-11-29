@@ -1,7 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { Settings, ChevronUp, ChevronDown } from 'lucide-react'
+import { Settings, ChevronUp, ChevronDown, X } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
@@ -10,84 +9,62 @@ import { Label } from '@/components/ui/label'
 import { Input } from '@/components/ui/input'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Badge } from '@/components/ui/badge'
-import { Trie } from '@/utils/trie'
-import type { TryHardLevel, VideoContent, UserSettings } from '@/types/settings'
+import { Textarea } from '@/components/ui/textarea'
+import { motion, AnimatePresence } from 'framer-motion'
+import type { TryHardLevel, VideoContent } from '@/types/settings'
+import VideoPlayer from './smaller_components/VideoPlayer'
+import { useSettings } from '@/context/SettingsContext' // Import useSettings
+import { useState } from 'react'
 
-const predefinedInterests = [
-  'Programming', 'Reading', 'Gaming', 'Cooking', 'Fitness',
-  'Music', 'Art', 'Photography', 'Writing', 'Meditation',
-  'Yoga', 'Dancing', 'Hiking', 'Travel', 'Languages'
-]
-
-const videoSources = {
-  linkedin: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
-  questionable: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
-  adhd: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ'
+// Add types
+interface WorkNote {
+  id: string
+  content: string
+  color: string
 }
 
 const LeftSection = () => {
-  const [settings, setSettings] = useState<UserSettings>({
-    tryHardLevel: 'medium',
-    interests: [],
-    videoContent: 'linkedin'
-  })
-  const [showSettings, setShowSettings] = useState(false)
-  const [searchTerm, setSearchTerm] = useState('')
-  const [searchResults, setSearchResults] = useState<string[]>([])
-  const [customInterest, setCustomInterest] = useState('')
-  const [trie] = useState(() => {
-    const t = new Trie()
-    predefinedInterests.forEach(interest => t.insert(interest))
-    return t
-  })
+  const {
+    settings,
+    setSettings,
+    showSettings,
+    setShowSettings,
+    searchTerm,
+    setSearchTerm,
+    searchResults,
+    customInterest,
+    setCustomInterest,
+    videoSources,
+    addCustomInterest,
+    toggleInterest,
+    removeInterest,
+    adjustTryHardLevel,
+  } = useSettings()
 
-  useEffect(() => {
-    if (searchTerm) {
-      const results = trie.search(searchTerm)
-      setSearchResults(results)
-    } else {
-      setSearchResults([])
+  const [notes, setNotes] = useState<WorkNote[]>([])
+  const [newNote, setNewNote] = useState("")
+
+  const STICKY_COLORS = [
+    "#fff740", // yellow
+    "#ff7eb9", // pink
+    "#7afcff", // blue
+    "#98ff98", // green
+  ]
+
+  const addNote = () => {
+    if (newNote.trim()) {
+      const note: WorkNote = {
+        id: Date.now().toString() + Math.random().toString(),
+        content: newNote.trim(),
+        color: STICKY_COLORS[Math.floor(Math.random() * STICKY_COLORS.length)]
+      }
+      setNotes(prev => [...prev, note])
+      setNewNote("")
     }
-  }, [searchTerm, trie ])
-
-  const addCustomInterest = () => {
-    if (customInterest && !settings.interests.includes(customInterest)) {
-      setSettings(prev => ({
-        ...prev,
-        interests: [...prev.interests, customInterest]
-      }))
-      trie.insert(customInterest)
-      setCustomInterest('')
-    }
   }
 
-  const toggleInterest = (interest: string) => {
-    setSettings(prev => ({
-      ...prev,
-      interests: prev.interests.includes(interest)
-        ? prev.interests.filter(i => i !== interest)
-        : [...prev.interests, interest]
-    }))
-  }
-
-  const removeInterest = (interest: string) => {
-    setSettings(prev => ({
-      ...prev,
-      interests: prev.interests.filter(i => i !== interest)
-    }))
-  }
-
-  const adjustTryHardLevel = (direction: 'up' | 'down') => {
-    const levels: TryHardLevel[] = ['low', 'medium', 'high']
-    const currentIndex = levels.indexOf(settings.tryHardLevel)
-    const newIndex = direction === 'up' 
-      ? Math.min(currentIndex + 1, levels.length - 1)
-      : Math.max(currentIndex - 1, 0)
-    
-    setSettings(prev => ({
-      ...prev,
-      tryHardLevel: levels[newIndex]
-    }))
+  const deleteNote = (id: string) => {
+    setNotes(prev => prev.filter(note => note.id !== id))
   }
 
   return (
@@ -124,29 +101,71 @@ const LeftSection = () => {
         <Card className="flex-grow">
           <CardContent className="p-4">
             <h2 className="mb-4 text-xl font-bold">Work Notes</h2>
-            <ScrollArea className="h-[calc(100vh-300px)]">
-              {/* Work notes content here */}
-            </ScrollArea>
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-semibold">Work Notes</h3>
+                <Badge variant="outline">{notes.length}</Badge>
+              </div>
+              
+              <div className="space-y-2">
+                <Textarea
+                  placeholder="Add a note..."
+                  value={newNote}
+                  onChange={(e) => setNewNote(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                      e.preventDefault()
+                      addNote()
+                    }
+                  }}
+                  className="min-h-[80px] resize-none"
+                />
+                <Button 
+                  onClick={addNote}
+                  className="w-full"
+                  disabled={!newNote.trim()}
+                >
+                  Add Note
+                </Button>
+              </div>
+
+              <ScrollArea className="h-[calc(100vh-400px)]">
+                <AnimatePresence mode="popLayout">
+                  {notes.map((note) => (
+                    <motion.div
+                      key={note.id}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -20 }}
+                      className="mb-3"
+                    >
+                      <div
+                        className="relative rounded-lg p-4 shadow-lg"
+                        style={{
+                          backgroundColor: note.color,
+                          transform: `rotate(${Math.random() * 3 - 1.5}deg)`
+                        }}
+                      >
+                        <button
+                          onClick={() => deleteNote(note.id)}
+                          className="absolute right-2 top-2 rounded-full p-1 
+                                  hover:bg-black/10 transition-colors"
+                        >
+                          <X className="h-4 w-4" />
+                        </button>
+                        <p className="whitespace-pre-wrap">{note.content}</p>
+                      </div>
+                    </motion.div>
+                  ))}
+                </AnimatePresence>
+              </ScrollArea>
+            </div>
           </CardContent>
         </Card>
       ) : (
-        <div className="aspect-video bg-gray-200 flex-grow">
-          <iframe
-            width="100%"
-            height="100%"
-            src={
-              settings.videoContent === 'linkedin'
-                ? 'https://www.youtube.com/embed/dQw4w9WgXcQ'
-                : settings.videoContent === 'questionable'
-                ? 'https://www.youtube.com/embed/dQw4w9WgXcQ'
-                : 'https://www.youtube.com/embed/dQw4w9WgXcQ'
-            }
-            title="Video Content"
-            frameBorder="0"
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-            allowFullScreen
-          ></iframe>
-        </div>
+<div className="flex-grow relative">
+  <VideoPlayer videoContent={settings.videoContent} />
+</div>
       )}
 
       {/* Bottom Section - Video Source */}
@@ -162,7 +181,7 @@ const LeftSection = () => {
       </div>
 
       <Dialog open={showSettings} onOpenChange={setShowSettings}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-2xl"  aria-description="Manage your preferences and interests">
           <DialogHeader>
             <DialogTitle>Settings</DialogTitle>
           </DialogHeader>
@@ -208,7 +227,7 @@ const LeftSection = () => {
                       className="cursor-pointer"
                       onClick={() => removeInterest(interest)}
                     >
-                      {interest} ×
+                      {interest} 
                     </Badge>
                   ))}
                 </div>
@@ -232,7 +251,7 @@ const LeftSection = () => {
                     placeholder="Add custom interest..."
                     value={customInterest}
                     onChange={(e) => setCustomInterest(e.target.value)}
-                    onKeyPress={(e) => e.key === 'Enter' && addCustomInterest()}
+                    onKeyDown={(e) => e.key === 'Enter' && addCustomInterest()}
                   />
                   <Button onClick={addCustomInterest}>Add</Button>
                 </div>
@@ -269,4 +288,3 @@ const LeftSection = () => {
 }
 
 export default LeftSection
-
