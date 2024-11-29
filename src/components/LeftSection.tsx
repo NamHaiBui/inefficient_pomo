@@ -1,6 +1,6 @@
 'use client'
 
-import { Settings, ChevronUp, ChevronDown } from 'lucide-react'
+import { Settings, ChevronUp, ChevronDown, X } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
@@ -9,9 +9,19 @@ import { Label } from '@/components/ui/label'
 import { Input } from '@/components/ui/input'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Badge } from '@/components/ui/badge'
+import { Textarea } from '@/components/ui/textarea'
+import { motion, AnimatePresence } from 'framer-motion'
 import type { TryHardLevel, VideoContent } from '@/types/settings'
 import VideoPlayer from './smaller_components/VideoPlayer'
 import { useSettings } from '@/context/SettingsContext' // Import useSettings
+import { useState } from 'react'
+
+// Add types
+interface WorkNote {
+  id: string
+  content: string
+  color: string
+}
 
 const LeftSection = () => {
   const {
@@ -30,6 +40,32 @@ const LeftSection = () => {
     removeInterest,
     adjustTryHardLevel,
   } = useSettings()
+
+  const [notes, setNotes] = useState<WorkNote[]>([])
+  const [newNote, setNewNote] = useState("")
+
+  const STICKY_COLORS = [
+    "#fff740", // yellow
+    "#ff7eb9", // pink
+    "#7afcff", // blue
+    "#98ff98", // green
+  ]
+
+  const addNote = () => {
+    if (newNote.trim()) {
+      const note: WorkNote = {
+        id: Date.now().toString() + Math.random().toString(),
+        content: newNote.trim(),
+        color: STICKY_COLORS[Math.floor(Math.random() * STICKY_COLORS.length)]
+      }
+      setNotes(prev => [...prev, note])
+      setNewNote("")
+    }
+  }
+
+  const deleteNote = (id: string) => {
+    setNotes(prev => prev.filter(note => note.id !== id))
+  }
 
   return (
     <div className="flex h-full flex-col p-4">
@@ -65,9 +101,65 @@ const LeftSection = () => {
         <Card className="flex-grow">
           <CardContent className="p-4">
             <h2 className="mb-4 text-xl font-bold">Work Notes</h2>
-            <ScrollArea className="h-[calc(100vh-300px)]">
-              {/* Work notes content here */}
-            </ScrollArea>
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-semibold">Work Notes</h3>
+                <Badge variant="outline">{notes.length}</Badge>
+              </div>
+              
+              <div className="space-y-2">
+                <Textarea
+                  placeholder="Add a note..."
+                  value={newNote}
+                  onChange={(e) => setNewNote(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                      e.preventDefault()
+                      addNote()
+                    }
+                  }}
+                  className="min-h-[80px] resize-none"
+                />
+                <Button 
+                  onClick={addNote}
+                  className="w-full"
+                  disabled={!newNote.trim()}
+                >
+                  Add Note
+                </Button>
+              </div>
+
+              <ScrollArea className="h-[calc(100vh-400px)]">
+                <AnimatePresence mode="popLayout">
+                  {notes.map((note) => (
+                    <motion.div
+                      key={note.id}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -20 }}
+                      className="mb-3"
+                    >
+                      <div
+                        className="relative rounded-lg p-4 shadow-lg"
+                        style={{
+                          backgroundColor: note.color,
+                          transform: `rotate(${Math.random() * 3 - 1.5}deg)`
+                        }}
+                      >
+                        <button
+                          onClick={() => deleteNote(note.id)}
+                          className="absolute right-2 top-2 rounded-full p-1 
+                                  hover:bg-black/10 transition-colors"
+                        >
+                          <X className="h-4 w-4" />
+                        </button>
+                        <p className="whitespace-pre-wrap">{note.content}</p>
+                      </div>
+                    </motion.div>
+                  ))}
+                </AnimatePresence>
+              </ScrollArea>
+            </div>
           </CardContent>
         </Card>
       ) : (
@@ -196,4 +288,3 @@ const LeftSection = () => {
 }
 
 export default LeftSection
-

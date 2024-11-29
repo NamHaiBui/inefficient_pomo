@@ -160,7 +160,9 @@ export const RightSection = () => {
 
   const generateNewTask = async (): Promise<TaskNode | null> => {
     try {
-      const prompt = "Give me task that will distract me from my current task and note that my interest is Overwatch\"\nKeep it short i.e <100 characters Respond with just the task and nothing else\nIf the task can be \"played\" and can be associated with a multiplayer competitive game, accompany it with the action of \"climb Solo Queue\" or ranked\nHave the tasks be as interactive and distracting like playing  or doing something actively\nException: Watching a recently released movie or Arcane";
+      const interests = settings.interests || ['Gaming'];
+      const randomInterest = interests[Math.floor(Math.random() * interests.length)];
+      const prompt = `Give me task that will distract me from my current task and note that my interest is ${randomInterest}\nKeep it short i.e <100 characters Respond with just the task and nothing else\nIf the task can be "played" and can be associated with a multiplayer competitive game, have  a 5% chance of accompany it with the action of "climb Solo Queue" or ranked\nHave the tasks be as interactive and distracting like playing  or doing something actively\nException: Watching a recently released movie or Arcane`;
       const result = await model.generateContent(prompt);
       const text = result.response.text().trim();
       
