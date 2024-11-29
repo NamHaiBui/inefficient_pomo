@@ -1,6 +1,5 @@
 'use client'
 
-import { useState, useEffect, useMemo, useCallback } from 'react'
 import { Settings, ChevronUp, ChevronDown } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -10,90 +9,27 @@ import { Label } from '@/components/ui/label'
 import { Input } from '@/components/ui/input'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Badge } from '@/components/ui/badge'
-import { Trie } from '@/utils/trie'
-import type { TryHardLevel, VideoContent, UserSettings } from '@/types/settings'
+import type { TryHardLevel, VideoContent } from '@/types/settings'
 import VideoPlayer from './smaller_components/VideoPlayer'
-
-// Move constants outside the component
-const predefinedInterests = [
-  'Programming', 'Reading', 'Gaming', 'Cooking', 'Fitness',
-  'Music', 'Art', 'Photography', 'Writing', 'Meditation',
-  'Yoga', 'Dancing', 'Hiking', 'Travel', 'Languages'
-]
-
-const videoSources = {
-  linkedin: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
-  questionable: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
-  adhd: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ'
-}
+import { useSettings } from '@/context/SettingsContext' // Import useSettings
 
 const LeftSection = () => {
-  const [settings, setSettings] = useState<UserSettings>({
-    tryHardLevel: 'medium',
-    interests: [],
-    videoContent: 'linkedin'
-  })
-  const [showSettings, setShowSettings] = useState(false)
-  const [searchTerm, setSearchTerm] = useState('')
-  const [searchResults, setSearchResults] = useState<string[]>([])
-  const [customInterest, setCustomInterest] = useState('')
-
-  // Use useMemo for trie initialization
-  const trie = useMemo(() => {
-    const t = new Trie()
-    predefinedInterests.forEach(interest => t.insert(interest))
-    return t
-  }, [])
-
-  useEffect(() => {
-    if (searchTerm) {
-      const results = trie.search(searchTerm)
-      setSearchResults(results)
-    } else {
-      setSearchResults([])
-    }
-  }, [searchTerm, trie])
-
-  // Memoize functions with useCallback
-  const addCustomInterest = useCallback(() => {
-    if (customInterest && !settings.interests.includes(customInterest)) {
-      setSettings(prev => ({
-        ...prev,
-        interests: [...prev.interests, customInterest]
-      }))
-      trie.insert(customInterest)
-      setCustomInterest('')
-    }
-  }, [customInterest, settings.interests, trie])
-
-  const toggleInterest = useCallback((interest: string) => {
-    setSettings(prev => ({
-      ...prev,
-      interests: prev.interests.includes(interest)
-        ? prev.interests.filter(i => i !== interest)
-        : [...prev.interests, interest]
-    }))
-  }, [settings.interests])
-
-  const removeInterest = useCallback((interest: string) => {
-    setSettings(prev => ({
-      ...prev,
-      interests: prev.interests.filter(i => i !== interest)
-    }))
-  }, [settings.interests])
-
-  const adjustTryHardLevel = useCallback((direction: 'up' | 'down') => {
-    const levels: TryHardLevel[] = ['low', 'medium', 'high']
-    const currentIndex = levels.indexOf(settings.tryHardLevel)
-    const newIndex = direction === 'up' 
-      ? Math.min(currentIndex + 1, levels.length - 1)
-      : Math.max(currentIndex - 1, 0)
-    
-    setSettings(prev => ({
-      ...prev,
-      tryHardLevel: levels[newIndex]
-    }))
-  }, [settings.tryHardLevel])
+  const {
+    settings,
+    setSettings,
+    showSettings,
+    setShowSettings,
+    searchTerm,
+    setSearchTerm,
+    searchResults,
+    customInterest,
+    setCustomInterest,
+    videoSources,
+    addCustomInterest,
+    toggleInterest,
+    removeInterest,
+    adjustTryHardLevel,
+  } = useSettings()
 
   return (
     <div className="flex h-full flex-col p-4">
@@ -135,7 +71,7 @@ const LeftSection = () => {
           </CardContent>
         </Card>
       ) : (
-<div className="aspect-video bg-gray-200 flex-grow relative">
+<div className="flex-grow relative">
   <VideoPlayer videoContent={settings.videoContent} />
 </div>
       )}
@@ -199,7 +135,7 @@ const LeftSection = () => {
                       className="cursor-pointer"
                       onClick={() => removeInterest(interest)}
                     >
-                      {interest} ×
+                      {interest} 
                     </Badge>
                   ))}
                 </div>

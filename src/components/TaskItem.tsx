@@ -8,7 +8,7 @@ import { cn } from '@/lib/utils';
 import { TaskNode } from '@/utils/TaskListDLL';
 
 interface TaskItemProps {
-  task: TaskNode;
+  task: TaskNode
   index: number;
   toggleTask: (id: string) => void;
   deleteTask: (id: string) => void;

@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 const videoCategories: Record<string, string[]> = {
   'questionable': [
     'https://www.youtube.com/embed/zuTOfSqpAPM',
@@ -35,7 +35,11 @@ const videoCategories: Record<string, string[]> = {
     'https://www.youtube.com/embed/nFrxAqLDmq0',
     'https://www.youtube.com/embed/sVZ1k1z9P1M',
     'https://www.youtube.com/embed/B3a7H5pqlVg'
-  ]
+  ],
+  'short': [
+    'https://www.youtube.com/embed/SHORT_VIDEO_ID',
+    // other URLs
+  ],
 } as const;
 
 type VideoContent = keyof typeof videoCategories;
@@ -46,32 +50,35 @@ interface VideoPlayerProps {
 
 const VideoPlayer: React.FC<VideoPlayerProps> = ({ videoContent }) => {
   const [currentVideo, setCurrentVideo] = useState(0);
-  const touchStartX = useRef(0);
-  const touchEndX = useRef(0);
+  const startX = useRef(0);
+  const isDragging = useRef(false);
   const containerRef = useRef<HTMLDivElement>(null);
+
+  
+  useEffect(() => {
+    setCurrentVideo(0);
+  }, [videoContent]);
 
   useEffect(() => {
     const handleResize = () => {
       if (containerRef.current) {
         const container = containerRef.current;
         const parentElement = container.parentElement;
-        
+
         if (parentElement) {
-          const aspectRatio = 16 / 9;
+          const isShort = videoContent === 'short';
+          const aspectRatio = isShort ? 9 / 16 : 16 / 9;
           const parentWidth = parentElement.clientWidth;
           const parentHeight = parentElement.clientHeight;
 
-          // Calculate dimensions while maintaining aspect ratio
           let width = parentWidth;
           let height = width / aspectRatio;
 
-          // If height exceeds parent container, scale down proportionally
           if (height > parentHeight) {
             height = parentHeight;
             width = height * aspectRatio;
           }
 
-          // Center the video in the container
           container.style.width = `${width}px`;
           container.style.height = `${height}px`;
           container.style.position = 'absolute';
@@ -84,26 +91,39 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ videoContent }) => {
     handleResize();
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
-  }, []);
+  }, [videoContent]);
 
-  const handleTouchStart = (e: React.TouchEvent<HTMLDivElement>) => {
-    touchStartX.current = e.changedTouches[0].clientX;
+  const handleStart = (e: React.TouchEvent | React.MouseEvent) => {
+    isDragging.current = true;
+    if ('touches' in e) {
+      startX.current = e.touches[0].clientX;
+    } else {
+      startX.current = e.clientX;
+    }
   };
 
-  const handleTouchEnd = (e: React.TouchEvent<HTMLDivElement>) => {
-    touchEndX.current = e.changedTouches[0].clientX;
-    handleSwipeGesture();
-  };
-
-  const handleSwipeGesture = () => {
-    const deltaX = touchStartX.current - touchEndX.current;
-    const swipeThreshold = 50; // Adjust the threshold as needed
+  const handleMove = (e: React.TouchEvent | React.MouseEvent) => {
+    if (!isDragging.current) return;
+    let currentX;
+    if ('touches' in e) {
+      currentX = e.touches[0].clientX;
+    } else {
+      currentX = e.clientX;
+    }
+    const deltaX = startX.current - currentX;
+    const swipeThreshold = 50;
 
     if (deltaX > swipeThreshold) {
+      isDragging.current = false;
       handleSwipeLeft();
     } else if (deltaX < -swipeThreshold) {
+      isDragging.current = false;
       handleSwipeRight();
     }
+  };
+
+  const handleEnd = () => {
+    isDragging.current = false;
   };
 
   const handleSwipeLeft = () => {
@@ -116,40 +136,72 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ videoContent }) => {
     );
   };
 
-  return (
-    <div 
-      ref={containerRef}
-      style={{
-        position: 'relative',
-        width: '100%',
-        maxWidth: '1200px',
-        margin: '0 auto',
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
-        height: '100%'
-      }}
-      onTouchStart={handleTouchStart}
-      onTouchEnd={handleTouchEnd}
-      className="relative"
-    >
+ // VideoPlayer.tsx
+return (
+  <div className="flex flex-col w-full h-full">
+    {/* Video Container remains the same */}
+    <div ref={containerRef} className="relative flex-grow">
       <iframe
         src={videoCategories[videoContent][currentVideo]}
         title="Video Player"
         style={{
-          position: 'absolute',
           width: '100%',
           height: '100%',
           border: 'none',
-          maxWidth: '100%',
-          maxHeight: '100%',
-          margin: 'auto'
         }}
         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
         allowFullScreen
       />
     </div>
-  );
+
+    {/* Fixed Swipe Control Section */}
+    <div className="relative h-16 bg-gray-100 mt-2 rounded-lg">
+      <div 
+        className="absolute inset-0 flex items-center justify-between px-4"
+        onMouseDown={handleStart}
+        onMouseMove={handleMove}
+        onMouseUp={handleEnd}
+        onMouseLeave={handleEnd}
+        onTouchStart={handleStart}
+        onTouchMove={handleMove}
+        onTouchEnd={handleEnd}
+      >
+        <button 
+          onClick={handleSwipeRight}  // Changed from handleSwipeRight
+          className="w-1/3 h-full hover:bg-gray-200 active:bg-gray-300 transition-colors flex items-center justify-center cursor-pointer"
+        >
+          <ChevronLeft className="h-6 w-6 text-gray-600" />
+        </button>
+        
+        <div className="w-1/3 h-full flex items-center justify-center">
+          <div className="flex gap-2">
+            {videoCategories[videoContent]?.map((_, index) => (
+              <div
+                key={index}
+                className={`w-2 h-2 rounded-full ${
+                  index === currentVideo ? 'bg-gray-800' : 'bg-gray-400'
+                }`}
+                role="button"
+                onClick={() => setCurrentVideo(index)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') setCurrentVideo(index);
+                }}
+                tabIndex={0}
+              />
+            ))}
+          </div>
+        </div>
+
+        <button
+          onClick={handleSwipeLeft}  // Changed from handleSwipeLeft
+          className="w-1/3 h-full hover:bg-gray-200 active:bg-gray-300 transition-colors flex items-center justify-center cursor-pointer"
+        >
+          <ChevronRight className="h-6 w-6 text-gray-600" />
+        </button>
+      </div>
+    </div>
+  </div>
+);
 };
 
 export default VideoPlayer;
