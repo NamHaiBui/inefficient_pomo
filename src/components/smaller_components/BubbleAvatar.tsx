@@ -90,6 +90,7 @@ export function BubbleAvatar({ workTime }: BubbleAvatarProps) {
       animate={{
         y: [0, -5, 0],
       }}
+      dragMomentum={false} // Added for more responsive dragging
       transition={{
         duration: 2,
         repeat: Infinity,
@@ -104,6 +105,7 @@ export function BubbleAvatar({ workTime }: BubbleAvatarProps) {
         fill
         className=" translate-x-[8px] translate-y-[6px]"
         priority
+        draggable={false} // Prevent image dragging
         onError={() => setImageError(true)}
         />
       ) : (
